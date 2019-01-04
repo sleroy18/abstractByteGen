@@ -1,29 +1,16 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BinaryConversionForm
 {
     public partial class TypeSelectionForm : Form
     {
-        private const int verticalBuffer = 10;
-        private const int horizontalBuffer = 8;
-        private const int labelHeight = 20;
-        private const int labelWidth = 100;
-        private static int nextX = horizontalBuffer;
-        private static int nextY = 40;
         private BinaryWriter bw;
         private object currentStruct;
+        Logic l = new Logic();
         public TypeSelectionForm()
         {
             InitializeComponent();
@@ -37,84 +24,26 @@ namespace BinaryConversionForm
             }
         }
 
-        public void addBinaryDisplay(Object currentStruct)
+        public void generateByteDoc(object currentStruct)
         {
             this.currentStruct = currentStruct;
-            List<Property> props = new List<Property>();
-            Type structType = this.currentStruct.GetType();
-            //string partialStructType = structType.ToString().Split('.')[structType.ToString().Split('.').Length - 1];
-            UInt16 sectionFlag = (UInt16)(Enums.StructTypes)Enum.Parse(typeof(Enums.StructTypes), structType.Name);
             createBinaryFile();
-            this.currentStruct = new structs.testClass(new int[] { 1, 2, 3 }, new structs.innerTestClass[] { new structs.innerTestClass(1)});
-            generateByteDoc();
 
-            foreach (PropertyInfo prop in this.currentStruct.GetType().GetProperties())
-            {
-                props.AddRange(getPropertyValues(prop));
-            }
+            //test object overwrites object sent by form
+            //this.currentStruct = new structs.testClass(
+            //    new int[] { 1, 2, 3 }, 
+            //    new structs.innerTestClass[] { new structs.innerTestClass(1)},
+            //    new int[][] { new int[2] { 1, 2 }, new int[2] { 3, 4 } },
+            //    5,
+            //    6,
+            //    "hello world",
+            //    (byte)'a',
+            //    (byte)'b',
+            //    15
+            //);
 
-            List<string> strListArr = generateByteStrings(props);    
-            //come back
-            //string displayBytes = fillByte(Convert.ToString(sectionFlag, 2)) + fillDisplayByte(strListArr);
-           
-            //binary file logic
-            writeToBinary(BitConverter.GetBytes(sectionFlag));
-            writeToBinary(BitConverter.GetBytes((byte)props.Count));
-            writeListToBinary(props);
-            
-            //for (int i = 0; i < propList.Count; i++)
-            //{
-            //    int typeVal = i;
-            //    if(propList[i].Count > 0){
-            //        typeVal += propertyArr[i][0].byteSigFlag;
-            //        if (propertyArr[i].Count > 1)
-            //        {
-            //            typeVal += 64;
-            //            //must write typeByte before length
-            //            writeToBinary(BitConverter.GetBytes((byte)typeVal));
-            //            //# reps
-            //            writeToBinary(BitConverter.GetBytes((byte)propertyArr[i].Count));
-
-            //            //write each byte[] val after the length of how many there are
-            //            foreach (Property p in propertyArr[i])
-            //            {
-            //                writeToBinary(p.value);
-            //            }
-            //        }
-            //        else
-            //        {
-            //            writeToBinary(BitConverter.GetBytes(typeVal));
-            //            //if == 1 just write index 0
-            //            writeToBinary(propertyArr[i][0].value);
-            //        }
-            //    }  
-            //}
-
+            findStructInfo();           
             bw.Close();
-
-            createLabel(structType.Name);
-            nextX += horizontalBuffer + labelWidth;
-            //createTB(structType.Name, displayBytes);
-            nextX -= (horizontalBuffer + labelWidth);
-            nextY += verticalBuffer + labelHeight;
-        }
-
-        private string fillByte(string s)
-        {
-            while (s.Length < 8)
-            {
-                s = "0" + s;
-            }
-            return s;
-        }
-
-        private string fillByte(string s, int p)
-        {
-            while (s.Length < p)
-            {
-                s = "0" + s;
-            }
-            return s;
         }
 
         private bool createBinaryFile()
@@ -157,268 +86,54 @@ namespace BinaryConversionForm
                 Console.WriteLine(e.Message + "\n Cannot write to file.");
                 return false;
             }
-        }
-
-        public void writeListToBinary(List<Property> props)
-        {
-            foreach (Property prop in props)
-            {
-                if((int)prop.typeFlag == (int)Enums.DataTypes.Collection)
-                {
-
-                }
-            }
-        }
-
-        public void createLabel(string type)
-        {
-            Label label = new Label()
-            {
-                Name = type + "Label",
-                Text = type,
-                Location = new Point(nextX, nextY),
-                Width = labelWidth,
-                Height = labelHeight
-            };
-            mainContainer.HorizontalScroll.Value = 0;
-            mainContainer.Controls.Add(label);
-        }
-
-        public void createTB(string type, string text)
-        {
-            TextBox tb = new TextBox()
-            {
-                Name = type + "TB",
-                Text = text,
-                Location = new Point(nextX, nextY),
-                Height = 20,
-                Width = 500
-            };
-            mainContainer.Controls.Add(tb);
-        }
-
-        public List<Property> getPropertyValues(PropertyInfo propInfo)
-        {
-            Logic l = new Logic();
-            Type propType = propInfo.PropertyType;
-            List<Property> props = new List<Property>();
-            Property prop = new Property();
-            if (l.IsPropertyACollection(propInfo.PropertyType))
-            {
-                if (propInfo.PropertyType.ToString().Contains(".structs."))
-                {
-                    //Come Back
-                    //    var collection = (List<object>)propInfo.GetValue(currentStruct);
-                    //    foreach(var item in collection)
-                    //    }
-                    //    }                   
-                }
-                else
-                {
-                    //var collection = (Array)propInfo.GetValue(currentStruct);
-                    //foreach (var item in collection)
-                    //{
-                    //    string s = item.ToString();
-                    //    Convert.ChangeType(s, propInfo.PropertyType.GetElementType());
-
-                    //    //prop.value = ObjectToByteArray(item);
-                    //    if(Enum.IsDefined(typeof(Enums.DataTypes), item.GetType().ToString()))
-                    //    {                     
-                    //        prop.typeFlag = (UInt16)Enum.Parse(typeof(Enums.DataTypes), item.GetType().ToString());
-                    //        if (prop.typeFlag % 2 != 0)
-                    //        {
-                    //            prop.sigFlag = (int)Enums.Signature.Signed;
-                    //            prop.byteSigFlag = 128;
-                    //        }
-                    //    }
-                    //}
-                }
-            }
-            else
-            {
-                //if (propType == typeof(byte))
-                //{
-                //    prop.value = new byte[] { (byte)propInfo.GetValue(currentStruct) };
-                //}
-                //else if (propType == typeof(byte[]))
-                //{
-                //    prop.value = (byte[])currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct);
-                //}
-                //else if (propType == typeof(UInt16))
-                //{
-                //    prop.value = BitConverter.GetBytes((UInt16)currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct));
-                //}
-                //else if (propType == typeof(UInt32))
-                //{
-                //    prop.value = BitConverter.GetBytes((UInt32)currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct));
-                //}
-                //else if (propType == typeof(UInt64))
-                //{
-                //    prop.value = BitConverter.GetBytes((UInt64)currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct));
-                //}
-                //else if (propType == typeof(sbyte))
-                //{
-                //    prop.value = new byte[] { (byte)propInfo.GetValue(currentStruct) };
-                //    prop.sigFlag = 128;
-                //}
-                //else if (propType == typeof(sbyte[]))
-                //{
-                //    prop.value = (byte[])currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct);
-                //    prop.sigFlag = 128;
-                //}
-                //else if (propType == typeof(Int16))
-                //{
-                //    prop.value = BitConverter.GetBytes((Int16)currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct));
-                //    prop.sigFlag = 128;
-                //}
-                //else if (propType == typeof(Int32))
-                //{
-                //    prop.value = BitConverter.GetBytes((Int32)currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct));
-                //    prop.sigFlag = 128;
-                //}
-                //else if (propType == typeof(Int64))
-                //{
-                //    prop.value = BitConverter.GetBytes((Int64)currentStruct.GetType().GetProperty(propInfo.Name).GetValue(currentStruct));
-                //    prop.sigFlag = 128;                 
-                //}
-                ////Come Back
-                //else if (propType.ToString().Contains(".structs."))
-                //{
-                //    //    foreach (PropertyInfo innerPropInfo in propType.GetProperties())
-                //    //    {
-                //    //        propArr.AddRange(getPropertyValues(innerPropInfo));
-                //    //    }
-                //}
-                //prop.typeFlag = (byte)(Enums.DataTypes)Enum.Parse(typeof(Enums.DataTypes), propType.Name);
-                //props.Add(prop);
-            }
-            return props;
-        }
+        }         
 
         /// <summary>
-        /// This function is used for test purposes and generates a user readable strings of binary data
+        /// writes the enum value of the struct type and proceeds to findPropTypeInfo()
         /// </summary>
-        /// <param name="props"></param>
-        /// <returns>A list of all user readable strings of bytes</returns>
-        public List<string> generateByteStrings(List<Property> props)
+        /// <param name="propInfo"></param>
+        public void findStructInfo(PropertyInfo propInfo = null)
         {
-            List<string> byteValueStrings = new List<string>();
-            foreach(Property prop in props)
-            {
-                string byteValueString = "";
-                //props.value = byte[] and the highest index value is the first byte from left to right which results in reversed order loop.
-                for (int i = prop.value.Length - 1; i >= 0; i--)
-                {
-                    byteValueString += fillByte(Convert.ToString(prop.value[i], 2));
-                }
-                byteValueStrings.Add(byteValueString);
-            }
-            return byteValueStrings;
-        }
-
-        //Converts byte array to a string of the bytes themselves. Only used for tool test purposes.
-        //Also puts each property string into a bucket of like types 
-        //possible use latter on
-        //public List<string>[] generateByteStrings(List<Property> props)
-        //{
-        //    //initialize array of lists
-        //    List<string>[] strListArr = new List<string>[Enum.GetNames(typeof(Enums.DataTypes)).Length];
-        //    for (int i = 0; i < strListArr.Length; i++)
-        //    {
-        //        strListArr[i] = new List<string>();
-        //    }
-        //    foreach (Property prop in props)
-        //    {
-        //        string byteStr = "";
-        //        for (int i = prop.value.Length - 1; i >= 0; i--)
-        //        {
-        //            byteStr += Convert.ToString(prop.value[i], 2);
-        //        }
-        //        strListArr[prop.typeFlag].Add(byteStr);
-        //    }
-        //    return strListArr;
-        //}
-
-        public string fillDisplayByte(List<string>[] strListArr)
-        {
-            string displayByte = "";
-            // i is a repesentation of the Data Type Enum because 1 list is made for each type in the order they are in inside the eum 
-            for (int i = 0; i < strListArr.Length; i++)
-            {
-                if (strListArr[i].Count > 0)
-                {
-                    string typeByte = "";
-                    string repByte = "";
-                    string valueByte = "";
-
-                    //defaulting to 0 to save time
-                    typeByte += Convert.ToString(0, 2);
-                    if (strListArr[i].Count == 1)
-                    {
-                        //is repeated byte
-                        typeByte += "0";
-                        valueByte += fillByte(strListArr[i][0]);
-                    }
-                    else if (strListArr[i].Count > 1)
-                    {
-                        //visual rep (not used in prod)
-                        repByte = fillByte(Convert.ToString((byte)strListArr[i].Count, 2));
-                        foreach (string s in strListArr[i])
-                        {
-                            valueByte += fillByte(s);
-                        }
-                        typeByte += "1";
-                    }
-                    else
-                    {
-                        typeByte += "0";
-                        valueByte += fillByte(valueByte);
-                    }
-
-                    //type byte - visual rep (not used in prod)
-                    typeByte += fillByte(Convert.ToString(i, 2), 6);
-
-                    displayByte += " type : " + typeByte;
-                    if (repByte != "")
-                    {
-                        displayByte += " reps : " + repByte;
-                    }
-                    displayByte += " vals : " + valueByte;               
-                }
-            }
-            return displayByte;
-        }
-
-        public List<byte[]> generateByteDoc(PropertyInfo propInfo = null)
-        {
-            PropertyInfo[] propInfoArr;
             Type structType;
             if(propInfo != null)
             {
                 structType = propInfo.PropertyType.GetElementType();
-                propInfoArr = new PropertyInfo[] { propInfo };
             }
             else
             {
                 structType = this.currentStruct.GetType();
-                propInfoArr = structType.GetProperties();
             }
             byte structFlag = (byte)(Enums.StructTypes)Enum.Parse(typeof(Enums.StructTypes), structType.Name);
             writeToBinary(structFlag);
 
-            return findPropTypeInfo(propInfoArr);
+            findPropTypeInfo();
         }
 
-        public List<byte[]> findPropTypeInfo(PropertyInfo[] propInfoArr)
+        /// <summary>
+        /// writes the enum value of each property of the struct type along with if the property is signed, 
+        /// is repeated several time and if there is an array of those values. It then proceeds to findPropertyValue()
+        /// </summary>
+        /// <param name="obj"></param>
+        public void findPropTypeInfo(object obj = null)
         {
-            List<byte[]> byteVals = new List<byte[]>();
+            PropertyInfo[] propInfoArr;
+            if (obj == null)
+            {
+                propInfoArr = this.currentStruct.GetType().GetProperties();
+            }
+            else
+            {
+                propInfoArr = obj.GetType().GetProperties();
+            }
+            //this is messy. can it be divided out to be made its own function for getRepFlag()?
             int repCounter = 0;
-
             for (int i = 0; i < propInfoArr.Length; i++)
             {
                 Property prop = new Property();
                 prop.propInfo = propInfoArr[i];
-                if(repCounter > 0)
+                prop.type = propInfoArr[i].PropertyType;
+                prop = generatePropFlags(prop);
+                if (repCounter > 0)
                 {
                     repCounter--;
                 }
@@ -431,6 +146,7 @@ namespace BinaryConversionForm
                             if (propInfoArr[i].PropertyType == propInfoArr[j].PropertyType)
                             {
                                 repCounter++;
+                                prop.repFlag = 64;
                             }
                             else
                             {
@@ -438,113 +154,214 @@ namespace BinaryConversionForm
                             }
                         }                      
                     }
-                    if(repCounter > 0)
+                    writeToBinary(prop.constructTypeByte());
+                    if (repCounter > 0)
                     {
-                        prop.repFlag = 64;
+                        writeToBinary((byte)repCounter);
                     }
-                    prop.sigFlag = (byte)getSigFlag(prop.propInfo.PropertyType);                   
-                    prop.arrFlag = (byte)getArrayFlag(prop.propInfo.PropertyType);
-                    prop.dataFlag = (byte)(Enums.DataTypes)Enum.Parse(typeof(Enums.DataTypes), prop.propInfo.PropertyType.Name);
-                    prop.typeFlag = (byte)((int)prop.sigFlag + (int)prop.repFlag + (int)prop.arrFlag + (int)prop.dataFlag);
-                    writeToBinary(prop.typeFlag);
                 }
-
-                byteVals.AddRange(findPropertyValue(prop));
-                
-                
-            }
-            return byteVals;
-        }
-
-        public List<byte[]> findPropertyValue(Property prop)
-        {
-            List<byte[]> byteVals = new List<byte[]>();
-            if (prop.arrFlag > 0)
-            {
-                var innerPropArr = (Array)prop.propInfo.GetValue(this.currentStruct);
-                writeToBinary((byte)innerPropArr.Length);
-
-                Enums.StructTypes innerStructType;
-                bool ans = Enum.TryParse<Enums.StructTypes>(prop.propInfo.PropertyType.GetElementType().Name, out innerStructType);
-                if (ans)
+                if(prop.arrFlag == 32)
                 {
-                    byteVals.AddRange(generateByteDoc(prop.propInfo));
+                    if(prop.propInfo.PropertyType == typeof(string) )
+                    {
+                        findArrayValues(prop.propInfo.GetValue(this.currentStruct).ToString().ToCharArray());
+                    }
+                    else
+                    {
+                        findArrayValues((Array)prop.propInfo.GetValue(this.currentStruct));
+                    }
                 }
                 else
-                {
-                    foreach(var item in innerPropArr)
-                    {
-                        // iterate through list somehow and add this to the 'if' above
-                    }
-                }
+                {                    
+                    findPropertyValue(prop, obj);                
+                }                             
+            }
+        }
+
+        /// <summary>
+        /// writes the value, in byte(s) or if the value is a User-Defined-Type, directs
+        /// the value back to findPropertyTypeInfo()
+        /// </summary>
+        /// <param name="prop"></param>
+        /// <param name="parentObj"></param>
+        public void findPropertyValue(Property prop, object parentObj = null)
+        {
+            Enums.StructTypes structType;
+            //if property type is a struct type
+            if (Enum.TryParse(prop.GetType().Name, out structType))
+            {
+                writeToBinary((byte)structType);
+                findPropTypeInfo(prop.type);
             }
             else
             {
-                prop.typeFlag += (byte)(Enums.DataTypes)Enum.Parse(typeof(Enums.DataTypes), propInfoArr[i].PropertyType.Name);
+                if(parentObj == null)
+                {                    
+                    writeUnknownType(prop.propInfo.GetValue(this.currentStruct), prop.propInfo.PropertyType);
+                }
+                else
+                {
+                    writeUnknownType(prop.propInfo.GetValue(parentObj), prop.propInfo.PropertyType);
+                }
             }
-            return byteVals;
+        }
+
+        /// <summary>
+        /// writes the individual array values. If the value is a nested array then it is sent back
+        /// through this function. If the values in the array are a User-Defined-Type they are sent
+        /// to the findPropTypeInfo() function to extract all values of that type.
+        /// </summary>
+        /// <param name="propArr"></param>
+        /// <param name="isNested"></param>
+        public void findArrayValues(Array propArr, bool isNested = false)
+        {
+            if (isNested)
+            {
+                Property prop = new Property();
+                prop.type = propArr.GetType();
+                prop = generatePropFlags(prop);
+                writeToBinary(prop.constructTypeByte());
+            }
+            writeToBinary((byte)propArr.Length);
+            if(propArr.GetType().GetElementType() == typeof(char))
+            {
+                writeToBinary(Encoding.UTF8.GetBytes((char[])propArr));
+            }
+            else
+            {
+                foreach (var item in propArr)
+                {
+                    Enums.StructTypes structType;
+                    //if property type is a struct type
+                    if (Enum.TryParse(item.GetType().Name, out structType))
+                    {
+                        byte test = (byte)structType;
+                        findPropTypeInfo(item);
+                    }
+                    else if (l.IsPropertyACollection(item.GetType()))
+                    {
+                        findArrayValues((Array)item, true);
+                    }
+                    else
+                    {
+                        Type arrType = propArr.GetType().GetElementType();
+                        writeUnknownType(item, arrType);
+                    }
+                }
+            }                
+        }
+
+        public void writeUnknownType(object obj, Type t)
+        {
+            //cannot dynmically convert type to a type unknown at runtime. Must be explicit cast
+            //if anyone finds the way to do this please send to sleroy18@jcu.edu because I was miserable scouring the internet for the solution
+            if (t == typeof(byte))
+            {
+                writeToBinary((byte)obj);
+            }
+            else if(t == typeof(char))
+            {
+                writeToBinary(Encoding.UTF8.GetBytes(obj.ToString().ToCharArray()));
+            }
+            else if (t == typeof(sbyte))
+            {
+                writeToBinary(BitConverter.GetBytes((sbyte)obj));
+            }
+            else if (t == typeof(UInt16))
+            {
+                writeToBinary(BitConverter.GetBytes((UInt16)obj));
+            }
+            else if (t == typeof(Int16))
+            {
+                writeToBinary(BitConverter.GetBytes((Int16)obj));
+            }
+            else if (t == typeof(UInt32))
+            {
+                writeToBinary(BitConverter.GetBytes((UInt32)obj));
+            }
+            else if (t == typeof(Int32))
+            {
+                writeToBinary(BitConverter.GetBytes((Int32)obj));
+            }
+            else if (t == typeof(UInt64))
+            {
+                writeToBinary(BitConverter.GetBytes((UInt64)obj));
+            }
+            else if (t == typeof(Int64))
+            {
+                writeToBinary(BitConverter.GetBytes((Int64)obj));
+            }
         }
 
         /// <summary>
         /// This function determines if the data type of the propertyinfo sent is signed or unsigned.
-        /// THis function is also dependent on the ordering of the DataType enum. Possibly revisit to find a less dependent way.
+        /// Signed types have nonzero MinValue constant, which will convert into true during boolean cast.
         /// </summary>
         /// <param name="prop"></param>
         /// <returns>a value added to the typeByte to show if the data is signed or not</returns>
-        public int getSigFlag(Type propType)
+        public byte getSigFlag(Type propType)
         {
-            int typeVal = (int)(Enums.DataTypes)Enum.Parse(typeof(Enums.DataTypes), propType.Name);
             if (propType.IsPrimitive)
             {
-                if (typeVal % 2 != 0)
-                {
+                if (Convert.ToBoolean(propType.GetField("MinValue").GetValue(null))){
                     return 128;
                 }
             }           
             return 0;
         }
 
-        public int getArrayFlag(Type propType)
+        public byte getArrayFlag(Type propType)
         {
-            Logic l = new Logic();
             if (l.IsPropertyACollection(propType))
             {
                 return 32;
             }
             return 0;
         }
-    } 
+
+        public byte getDataFlag(Type propType)
+        {           
+            Enums.DataTypes propDataType;
+            //Noraml Data Type
+            if (Enum.TryParse(propType.Name, out propDataType))
+            {
+                return (byte)propDataType;
+            }
+            //Data Type is an Array
+            else if (getArrayFlag(propType) == 32)
+            {
+                Enums.StructTypes structDataType;
+                //Data Type is a normal Array
+                if (Enum.TryParse(propType.GetElementType().Name, out propDataType))
+                {
+                    return (byte)propDataType;
+                }
+                //Data Type is an Array of Structs
+                else if (Enum.TryParse(propType.GetElementType().Name, out structDataType))
+                {
+                    return (byte)Enums.DataTypes.User_Defined_Type;
+                }
+                return (byte)Enums.DataTypes.Collection;
+            }
+            //If not a normal type or array then must be a struct
+            return (byte)Enums.DataTypes.User_Defined_Type;
+        }
+
+        public Property generatePropFlags(Property prop)
+        {
+            Type propType = prop.type;
+            prop.arrFlag = getArrayFlag(propType);
+
+            //if the type being sent here is also an array then to get the type that the array is needs to be sent to sigFlag and dataFlag
+            if (l.IsPropertyACollection(propType))
+            {
+                propType = propType.GetElementType();
+            }
+
+            prop.sigFlag = getSigFlag(propType);
+            prop.dataFlag = getDataFlag(propType);
+                    
+            return prop;            
+        }
+    }
 }
-
-
-
-// ALL USED FOR REFERENCE
-
-//failed attempt 1
-//BinaryFormatter bf = new BinaryFormatter();
-//using (var ms = new MemoryStream())
-//{
-//    MessageBox.Show(currentStruct.GetType().GetProperty(prop.Name).GetValue(currentStruct, null).ToString());
-//    bf.Serialize(ms, currentStruct.GetType().GetProperty(prop.Name).GetValue(currentStruct, null));
-//    test = ms.ToArray();
-//}
-//var t =;
-//MessageBox.Show(t.GetType().ToString());
-
-
-//failed attempt 2
-//(byte[])typeof(BitConverter)
-//    .GetMethod("GetBytes", new Type[] { currentStruct.GetType().GetProperty(prop.Name).PropertyType.GetType() })
-//    .Invoke(null, new object[] { currentStruct.GetType().GetProperty(prop.Name).GetValue(currentStruct, null) });
-
-
-//failed attempt 3 .... and done ... resorting to many if else statments instead of dynamic type into byte array
-//test = BitConverter.GetBytes(
-//    Convert.ChangeType(currentStruct.GetType()
-//                            .GetProperty(prop.Name)
-//                            .GetValue(currentStruct, null),
-//                        currentStruct.GetType()
-//                        .GetProperty(prop.Name)
-//                        .PropertyType));
-
-//MessageBox.Show(currentStruct.GetType().GetProperty(prop.Name).GetValue(currentStruct, null).ToString()); //reference

@@ -12,7 +12,6 @@ c:\Users\sleroy\source\repos\WindowsFormsApp1\WindowsFormsApp1\obj\Debug\Windows
 c:\Users\sleroy\source\repos\WindowsFormsApp1\WindowsFormsApp1\obj\Debug\BinaryConversionForm.csprojAssemblyReference.cache
 c:\Users\sleroy\source\repos\WindowsFormsApp1\WindowsFormsApp1\obj\Debug\WindowsFormsApp1.FillStructForm.resources
 c:\Users\sleroy\source\repos\WindowsFormsApp1\WindowsFormsApp1\obj\Debug\WindowsFormsApp1.TypeSelectionForm.resources
-C:\Users\sleroy\source\repos\BinaryConversionForm\BinaryConversionForm\obj\Debug\BinaryConversionForm.CompiledData.resources
 C:\Users\sleroy\source\repos\BinaryConversionForm\BinaryConversionForm\obj\Debug\WindowsFormsApp1.Properties.Resources.resources
 C:\Users\sleroy\source\repos\BinaryConversionForm\BinaryConversionForm\obj\Debug\BinaryConversionForm.csproj.GenerateResource.cache
 C:\Users\sleroy\source\repos\BinaryConversionForm\BinaryConversionForm\obj\Debug\BinaryConversionForm.csproj.CoreCompileInputs.cache

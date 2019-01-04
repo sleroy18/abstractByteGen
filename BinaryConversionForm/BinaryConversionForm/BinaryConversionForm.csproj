@@ -49,14 +49,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="byteGen.cs" />
-    <Compile Include="byteStructure.cs" />
-    <Compile Include="compiledData.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="compiledData.Designer.cs">
-      <DependentUpon>compiledData.cs</DependentUpon>
-    </Compile>
     <Compile Include="Enums.cs" />
     <Compile Include="FillStructForm.cs">
       <SubType>Form</SubType>
@@ -107,10 +99,6 @@
     <Compile Include="TypeSelectionForm.Designer.cs">
       <DependentUpon>TypeSelectionForm.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="compiledData.resx">
-      <DependentUpon>compiledData.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="FillStructForm.resx">
       <DependentUpon>FillStructForm.cs</DependentUpon>
     </EmbeddedResource>

@@ -35,6 +35,11 @@ namespace BinaryConversionForm
             return Convert.ChangeType(value, conversionType);
         }
 
+        /// <summary>
+        /// Converts any object to a byte array. However, this add metadata to deserialize which is not applicable for t
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         byte[] objectToByteArray(object obj)
         {
             if (obj == null)

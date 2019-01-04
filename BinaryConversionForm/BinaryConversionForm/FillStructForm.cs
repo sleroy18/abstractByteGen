@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using BinaryConversionForm.structs;
-using System.Drawing.Drawing2D;
 using System.Reflection;
 
 namespace BinaryConversionForm
@@ -40,34 +34,43 @@ namespace BinaryConversionForm
         {
             object currentStruct = Activator.CreateInstance(type);
             Type innerType = currentStruct.GetType();
-            foreach (PropertyInfo prop in currentStruct.GetType().GetProperties())
+            foreach (PropertyInfo propInfo in currentStruct.GetType().GetProperties())
             {
-                PropertyInfo pi = prop;
-                if (l.IsPropertyACollection(prop))
+                Enums.StructTypes structDataType;
+                if (l.IsPropertyACollection(propInfo.PropertyType))
                 {
                     //this would be functionality to implement getting an array of info
                     //ie) find value based on .PropertyType.GetElementType() then = data or data.toList()
-                    innerType = prop.PropertyType.GetElementType();
+                    innerType = propInfo.PropertyType.GetElementType();
                 }
-                PropertyInfo propertyInfo = currentStruct.GetType().GetProperty(prop.Name);
+                PropertyInfo propertyInfo = currentStruct.GetType().GetProperty(propInfo.Name);
                 //specify between byte and byte[] to determine if propertyinfo is set to single byte
-                if (prop.PropertyType == typeof(byte) || prop.PropertyType == typeof(sbyte))
+                if (propInfo.PropertyType == typeof(byte))
                 {
-                    propertyInfo.SetValue(currentStruct, Encoding.ASCII.GetBytes(Controls.Find(prop.Name, true).FirstOrDefault().Text)[0], null);
+                    propertyInfo.SetValue(currentStruct, (byte)(Controls.Find(propInfo.Name, true).FirstOrDefault().Text)[0], null);
                 }
-                else if (prop.PropertyType == typeof(byte[]) || prop.PropertyType == typeof(sbyte[]))
+                else if (propInfo.PropertyType == typeof(sbyte))
                 {
-                    propertyInfo.SetValue(currentStruct, Encoding.ASCII.GetBytes(Controls.Find(prop.Name, true).FirstOrDefault().Text), null);
+                    propertyInfo.SetValue(currentStruct, (sbyte)(Controls.Find(propInfo.Name, true).FirstOrDefault().Text)[0], null);
                 }
-                else if (prop.PropertyType.ToString().Contains(".structs."))
+                else if (propInfo.PropertyType == typeof(byte[]) || propInfo.PropertyType == typeof(sbyte[]))
                 {
-                    if (l.IsPropertyACollection(prop))
-                    {             
+                    propertyInfo.SetValue(currentStruct, Encoding.ASCII.GetBytes(Controls.Find(propInfo.Name, true).FirstOrDefault().Text), null);
+                }
+                else if (Enum.TryParse(propInfo.PropertyType.Name, out structDataType))
+                {
+                    if (l.IsPropertyACollection(propInfo.PropertyType))
+                    {
                         //come back to this
-                        //Issue: propertyInfo does not know if it is an array or not so we have to treat it like a variable and use 
+                        //Issue: 
+                        //propertyInfo does not know if it is an array or not so we have to treat it like a variable and use 
                         //SetValue. In doing so we have to give SetValue and array. The array we give it is an object array filled with 
                         //the same content type as the "PropertyInfo" array will need but because the array's type that we are pushing into
                         //propertyInfo is object it will not accept trying to convert object[] to whateverThisTypeEndsUpBeing[]
+                        //possible fix:
+                        //Just how it was done in the TypeSelectionForm where the cast had to be explicit in the writeUnknownType() function
+                        //this can be done. Ask if the type is a collection what type of collection it is. It may not be able to be dynamic 
+                        //but without this piece it prevents any struct with an array other than a byte[] to pass.
 
                         //object[] arr = new object[1];
                         //object[][] fieldArrs = new object[1][];
@@ -88,15 +91,15 @@ namespace BinaryConversionForm
                     }
                     else
                     {
-                        propertyInfo.SetValue(currentStruct, assignInnerValues(prop), null);
+                        propertyInfo.SetValue(currentStruct, assignInnerValues(propInfo), null);
                     }
                 }
                 else
                 {
-                    propertyInfo.SetValue(currentStruct, Convert.ChangeType(Controls.Find(prop.Name, true).FirstOrDefault().Text, prop.PropertyType), null);
+                    propertyInfo.SetValue(currentStruct, Convert.ChangeType(Controls.Find(propInfo.Name, true).FirstOrDefault().Text, propInfo.PropertyType), null);
                 }
             }
-            tsf.addBinaryDisplay(currentStruct);
+            tsf.generateByteDoc(currentStruct);
             this.Close();
         }
 
@@ -157,12 +160,12 @@ namespace BinaryConversionForm
         }
 
         //Similar to getControls but uses PropertyType to get class variables
-        public void generateInnerControls(PropertyInfo str)
+        public void generateInnerControls(PropertyInfo propInfo)
         {
-            PropertyInfo[] piArr = str.PropertyType.GetProperties();
-            if (l.IsPropertyACollection(str))
+            PropertyInfo[] piArr = propInfo.PropertyType.GetProperties();
+            if (l.IsPropertyACollection(propInfo.PropertyType))
             {
-                piArr = str.PropertyType.GetElementType().GetProperties();
+                piArr = propInfo.PropertyType.GetElementType().GetProperties();
             }
             foreach (PropertyInfo prop in piArr)
             {
@@ -177,10 +180,8 @@ namespace BinaryConversionForm
                 else
                 {
                     generateControlVisuals(prop);
-                }
-                
-            }
-            
+                }   
+            }           
         }
 
         public void generateControlVisuals(PropertyInfo prop)
@@ -203,15 +204,15 @@ namespace BinaryConversionForm
             nextY += labelHeight + verticalBuffer;
         }
 
-        public object assignInnerValues(PropertyInfo prop)
+        public object assignInnerValues(PropertyInfo propInfo)
         {
-            Type type = prop.PropertyType;
-            PropertyInfo[] piArr = prop.PropertyType.GetProperties();           
+            Type type = propInfo.PropertyType;
+            PropertyInfo[] piArr = propInfo.PropertyType.GetProperties();           
 
-            if (l.IsPropertyACollection(prop))
+            if (l.IsPropertyACollection(propInfo.PropertyType))
             {
-                type = prop.PropertyType.GetElementType();
-                piArr = prop.PropertyType.GetElementType().GetProperties();
+                type = propInfo.PropertyType.GetElementType();
+                piArr = propInfo.PropertyType.GetElementType().GetProperties();
             }
 
             object innerStruct = Activator.CreateInstance(type);
@@ -230,7 +231,5 @@ namespace BinaryConversionForm
             }
             return innerStruct;
         }
-
-        
     }
 }

@@ -8,22 +8,11 @@ namespace BinaryConversionForm
 {
     class Enums
     {
-
-        public enum Signature
-        {
-            Unsigned,
-            Signed
-        }
-
         public enum DataTypes : UInt16
         {
             Byte,
-            SByte,
-            UInt16,
             Int16,
-            UInt32,
             Int32,
-            UInt64,
             Int64,
             String,
             Collection,
